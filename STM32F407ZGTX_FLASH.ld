@@ -48,6 +48,8 @@ MEMORY
   CCMRAM    (xrw)    : ORIGIN = 0x10000000,   LENGTH = 64K
   RAM    (xrw)    : ORIGIN = 0x20000000,   LENGTH = 128K
   FLASH    (rx)    : ORIGIN = 0x8000000,   LENGTH = 1024K
+    SRAM    (rx)    : ORIGIN = 0x68000000,   LENGTH = 1024K
+  
 }
 
 /* Sections */
@@ -193,6 +195,19 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM
+    .sram (NOLOAD) : 
+  {
+    . = ALIGN(4);
+      __SRAM_SYMBOLS = .;       /* create a global symbol at ccmram start */
+    *(.sram)
+    *(.sram*)
+    
+    . = ALIGN(4);
+    __SRAM_SYMBOLS = .;       /* create a global symbol at ccmram end */
+    
+  } >SRAM AT> FLASH
+  
+  
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :
