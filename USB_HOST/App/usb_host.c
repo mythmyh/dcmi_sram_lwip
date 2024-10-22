@@ -225,12 +225,12 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_CLASS_ACTIVE:
   Appli_state = APPLICATION_READY;
-  if( ETX_MSC_ProcessUsbDevice() != FR_OK )
-  {
-    printf("USB Device Process Error\n");
-    /* Error : Hang Here */
-    while(1);
-  }
+//  if( ETX_MSC_ProcessUsbDevice() != FR_OK )
+//  {
+//    printf("USB Device Process Error\n");
+//    /* Error : Hang Here */
+//    while(1);
+//  }
   break;
 
   case HOST_USER_CONNECTION:
