@@ -55,14 +55,14 @@
 /* This file was modified by ST */
 #include<stdlib.h>
 #include "tcpClientRAW.h"
-
+#include <time.h>
 #include "lwip/tcp.h"
-#include<string.h>
 #define BUFFSIZE 614400
 #define HEIGHT 480
 extern uint8_t testsram[BUFFSIZE];
 extern uint8_t abc[1400];
 extern volatile int echo_run;
+int send_all=0;
 extern int resend_no;
 extern  int all_circle,left_bytes;
 /*  protocol states */
@@ -73,6 +73,7 @@ int circle_time=0;
 
 
 
+extern DCMI_HandleTypeDef hdcmi;
 
 
 
@@ -87,6 +88,7 @@ extern uint32_t DCMI_RN ;  //row number
 extern uint32_t DCMI_CN ;  //column number
 extern uint32_t DCMI_RS ;  //row start
 extern uint32_t DCMI_CS;  //column start
+clock_t start, finish;
 
 /* USER CODE END PM */
 
@@ -150,40 +152,60 @@ printf("connect error,!closed by core ");
 
 void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi2)
 {
+
+
+		//if(total_time>0)
+	HAL_DCMI_Suspend(&hdcmi);
+	//HAL_DCMI_Stop(&hdcmi);
+
 	if(echo_run==1){
-		 HAL_DCMI_Stop(&hdcmi);
+		circle_time++;
+	//	printf("start send %d.bmp,time\r\n",circle_time);
 
 	esTx->p = pbuf_alloc(PBUF_RAW,1400, PBUF_POOL);
 	if(esTx->p!=NULL){
 	pbuf_take(esTx->p,abc, 1400);
 	tcp_client_send(pcbTx, esTx);
 	pbuf_free(esTx->p);
-
 	}
-
 	echo_run=0;
+	}else{
+		send_all+=1;
+		printf("miss %d %d\r\n",send_all,echo_run);
 	}
+
 
 
 }
 void send_poolsize(int counter) {
 
+
+//	clock_t start, finish;
+float total_time;
+//	start=clock();
+
 	int counter_end =counter+ 3;
 
 	if (counter_end>all_circle)
 		counter_end=all_circle;
-	circle_time++;
 	int persize=1400;
-	printf("counter=%d,end=%d\r\n",counter,counter_end);
+	//printf("counter=%d,end=%d\r\n",counter,counter_end);
 
 	while (counter < counter_end) {
 
 		//the last one of the circles
 		if(counter==(all_circle-1)&&left_bytes!=0){
-			persize=left_bytes;
-		 	 HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)testsram,DCMI_CN*DCMI_RN/4);
-		 	 echo_run=1;
 
+				//if(total_time>0)
+			//	printf("finish %d.bmp\r\n",circle_time);
+
+			persize=left_bytes;
+			//__HAL_DCMI_ENABLE_IT(&hdcmi, DCMI_IT_FRAME);//每次拍照前都要使能帧中断
+		 	HAL_DCMI_Resume(&hdcmi);
+
+		 //	 HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)testsram,DCMI_CN*DCMI_RN/4);
+		 	 echo_run=1;
+		 	 send_all=1;
 
 		}
 		//printf("send buff \r\n");
@@ -199,6 +221,11 @@ void send_poolsize(int counter) {
 		}
 
 	}
+
+//
+//	finish=clock();
+//	total_time=(int)(finish-start)/CLOCKS_PER_SEC;
+//printf("send %d seconds\r\n",total_time);
 
 }
 
@@ -334,7 +361,6 @@ static err_t tcp_client_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
 		if(resend_no==6666){
 			echo_run=1;
 		}else if(resend_no>=(all_circle+1)){
-			printf("send pool_size %d\r\n",all_circle+1);
 			resend_no-=all_circle+1;
 			send_poolsize(resend_no);
 
