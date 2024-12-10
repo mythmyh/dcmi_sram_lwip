@@ -60,7 +60,7 @@
 #define BUFFSIZE 614400
 #define HEIGHT 480
 extern uint8_t testsram[BUFFSIZE];
-extern uint8_t abc[1280];
+//extern uint8_t abc[1280];
 extern volatile int echo_run;
 int send_all=0;
 extern int resend_no;
@@ -179,31 +179,31 @@ void HAL_DCMI_FrameEventCallback(DCMI_HandleTypeDef *hdcmi2)
 
 }
 
-void echo()
-{
-
-
-		//if(total_time>0)
-
-
-	if(echo_run==1){
-
-
-	//	printf("start send %d.bmp,time\r\n",circle_time);
-		echo_run=0;
-
-	esTx->p = pbuf_alloc(PBUF_RAW,3840, PBUF_POOL);
-	if(esTx->p!=NULL){
-	pbuf_take(esTx->p,abc,3840);
-	tcp_client_send(pcbTx, esTx);
-	pbuf_free(esTx->p);
-	}
-
-
-
-
-}
-}
+//void echo()
+//{
+//
+//
+//		//if(total_time>0)
+//
+//
+//	if(echo_run==1){
+//
+//
+//	//	printf("start send %d.bmp,time\r\n",circle_time);
+//		echo_run=0;
+//
+//	esTx->p = pbuf_alloc(PBUF_RAW,3840, PBUF_POOL);
+//	if(esTx->p!=NULL){
+//	pbuf_take(esTx->p,abc,3840);
+//	tcp_client_send(pcbTx, esTx);
+//	pbuf_free(esTx->p);
+//	}
+//
+//
+//
+//
+//}
+//}
 
 
 void send_poolsize(int counter) {
@@ -215,11 +215,10 @@ void send_poolsize(int counter) {
 
 	if (counter_end>all_circle)
 		counter_end=all_circle;
-	int persize=1280;
+	int persize=1400;
 	//printf("counter=%d,end=%d\r\n",counter,counter_end);
 
 	while (counter < counter_end) {
-
 		//the last one of the circles
 		if(counter==(all_circle-1)){
 
@@ -228,13 +227,10 @@ void send_poolsize(int counter) {
 				}
 				//if(total_time>0)
 			//	printf("finish last counter %d,all_circles %d\r\n",counter,all_circle);
-
 			//__HAL_DCMI_ENABLE_IT(&hdcmi, DCMI_IT_FRAME);//每次拍照前都要使能帧中断
 		// 	HAL_DCMI_Resume(&hdcmi);
-
 		 	// HAL_DCMI_Start_DMA(&hdcmi, DCMI_MODE_SNAPSHOT, (uint32_t)testsram,DCMI_CN*DCMI_RN/4);
-		 	 echo_run=1;
-		 	 send_all=1;
+
 
 		}
 		//printf("send buff \r\n");
@@ -242,7 +238,7 @@ void send_poolsize(int counter) {
 		esTx->p = pbuf_alloc(PBUF_RAW, persize, PBUF_POOL);
 		if(esTx->p!=NULL){
 
-		pbuf_take(esTx->p,testsram+1280*counter, persize);
+		pbuf_take(esTx->p,testsram+1400*counter, persize);
 		tcp_client_send(pcbTx, esTx);
 		counter++;
 		pbuf_free(esTx->p);
@@ -280,7 +276,7 @@ void tcp_client_init(void) {
 
 	/* 2. Connect to the server */
 	ip_addr_t destIPADDR;
-	IP_ADDR4(&destIPADDR, 192, 168, 1, 7);
+	IP_ADDR4(&destIPADDR, 192, 168, 1, 26);
 	err_t ok;
 	//while(ok!= ERR_OK)
 		ok=tcp_connect(tpcb, &destIPADDR, 12345, tcp_client_connected);
@@ -377,20 +373,14 @@ static err_t tcp_client_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p,
 		/* store reference to incoming pbuf (chain) */
 		//es->p = p;
 		uint8_t num[4];
-		//while(ptmp!=NULL){
 			for(int i=0;i<4;i++){
 				//printf("%c",*((char *)p->payload+i));
 				num[i]=*((char *)p->payload+i);
-			//}
-			//ptmp=p->next;
+
 		}
 		resend_no=num[0]+num[1]+num[2]+num[3];
-//
-			if(resend_no==1000){
-				echo();
-			}else{
 			resend_no-=all_circle+1;
-			}
+
 
 
 		// tcp_sent has already been initialized in the beginning.
